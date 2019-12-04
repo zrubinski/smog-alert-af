@@ -1,11 +1,17 @@
 import { connect, Client } from "mqtt";
 
-var mqttBrokerHost = 'broker.hivemq.com';
-var mqttBrokerPort = 1883;
-var mqttBrokerClientName = 'IDEAapp_AF';
-var mqttTopic = 'IDEAapp/cmd';
-
 export class MQTTService {
+    private mqttBrokerHost: string;
+    private mqttBrokerPort: number;
+    private mqttBrokerClientName: string;
+    private mqttTopic: string;
+
+    constructor() {
+        this.mqttBrokerHost = process.env['MQTT_BROKER_HOST'];
+        this.mqttBrokerPort = +process.env['MQTT_BROKER_PORT'];
+        this.mqttBrokerClientName = process.env['MQTT_BROKER_CLIENT_NAME'];
+        this.mqttTopic = process.env['MQTT_BROKER_TOPIC'];
+    }
 
     public publishEventVeryLow = () => {
         this.mqttPublish("event,VeryLow");
@@ -37,13 +43,14 @@ export class MQTTService {
 
     private mqttPublish = (message: string) => {
         try {
-            let connectionString = ['mqtt', '//' + mqttBrokerHost, mqttBrokerPort].join(":");
+            let connectionString = ['mqtt', '//' + this.mqttBrokerHost, this.mqttBrokerPort].join(":");
 
             let client: Client = connect(connectionString,
                 {
-                    clientId: mqttBrokerClientName
+                    clientId: this.mqttBrokerClientName
                 });
 
+            let mqttTopic = this.mqttTopic;
             client.on("connect", function () {
                 client.publish(mqttTopic, message);
                 client.end();
