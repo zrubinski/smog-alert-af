@@ -1,38 +1,54 @@
 import { AirlyService } from "./AirlyService";
 import { MQTTService } from "./MQTTService";
+import { AzureStorageService } from "./AzureStorageService";
 
 export class SmogAlertService {
 
     public checkAirlyIndex = () => {
-
         const airly = new AirlyService();
-        airly.getAirlyIndex()
-            .then((index: number) => {
+        airly.getAirlyData()
+            .then(this.onCheckingAirlyIndex)
+            .catch(this.onError);
+    }
 
-                if (index < 0) {
-                    return;
-                }
+    private onCheckingAirlyIndex = (airlyData: IAirlyData) => {
+        this.updateAzureTable(airlyData);
+        this.publishMQTT(airlyData);
+    }
 
-                let mqttService = new MQTTService();
+    private onError = (error: any) => {
+        console.log(error);
+    }
 
-                if (index < 25) {
-                    mqttService.publishEventVeryLow();
-                } else if (index < 50) {
-                    mqttService.publishEventLow();
-                } else if (index < 75) {
-                    mqttService.publishEventMedium();
-                } else if (index < 87.5) {
-                    mqttService.publishEventHigh();
-                } else if (index < 100) {
-                    mqttService.publishEventVeryLow();
-                } else if (index < 125) {
-                    mqttService.publishEventExtreme();
-                } else {
-                    mqttService.publishEventAirmageddon();
-                }
+    private updateAzureTable = (airlyData: IAirlyData) => {
+        const service = new AzureStorageService();
+        service.createAirlyTableIfNotExists();
+        service.insertAirlyData(airlyData);
+    }
 
-            })
-            .catch(err => console.log(err));
+    private publishMQTT = (airlyData: IAirlyData) => {
+        if (airlyData === undefined || airlyData === null) {
+            return;
+        }
 
+        const index = airlyData.index;
+
+        let mqttService = new MQTTService();
+
+        if (index < 25) {
+            mqttService.publishEventVeryLow();
+        } else if (index < 50) {
+            mqttService.publishEventLow();
+        } else if (index < 75) {
+            mqttService.publishEventMedium();
+        } else if (index < 87.5) {
+            mqttService.publishEventHigh();
+        } else if (index < 100) {
+            mqttService.publishEventVeryLow();
+        } else if (index < 125) {
+            mqttService.publishEventExtreme();
+        } else {
+            mqttService.publishEventAirmageddon();
+        }
     }
 }
