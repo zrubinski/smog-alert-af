@@ -12,8 +12,8 @@ export class SmogAlertService {
     }
 
     private onCheckingAirlyIndex = (airlyData: IAirlyData) => {
-        this.updateAzureTable(airlyData);
         this.publishMQTT(airlyData);
+        this.updateAzureTable(airlyData);
     }
 
     private onError = (error: any) => {
