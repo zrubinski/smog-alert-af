@@ -30,6 +30,7 @@ export class AirlyService {
             .get(url)
             .set('apikey', this.airlyApiKey)
             .set('Content-Type', 'application/json')
-            .set('Accept-Encoding', 'application/gzip');
+            .set('Accept-Encoding', 'application/gzip')
+            .set('Accept-Language', 'pl');
     }
 }
