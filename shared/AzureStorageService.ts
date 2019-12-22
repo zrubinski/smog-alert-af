@@ -1,3 +1,5 @@
+import { Context } from "@azure/functions";
+
 var azure = require('azure-storage');
 
 export class AzureStorageService {
@@ -65,6 +67,29 @@ export class AzureStorageService {
             if (!error) {
                 console.log('data inserted');
             }
+        });
+    }
+
+    public getLatestAirlyData = (context: Context) => {
+        const query = new azure.TableQuery()
+            .select(['airlyData'])
+            .top(1)
+            .where('PartitionKey eq ? and RowKey eq ?', this.airlyPartitionKey, this.airlyCurrentRowKey);
+
+        const tableService = this.getTableService();
+        tableService.queryEntities(this.airlyTableName, query, null, function (error, result, response) {
+            if (!error) {
+                context.res = {
+                    status: 200,
+                    body: response.body.value[0].airlyData,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                };
+            } else {
+                context.res.status(500).json({ error: error });
+            }
+            context.done();
         });
     }
 }
